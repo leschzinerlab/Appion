@@ -1,23 +1,43 @@
 #!/usr/bin/env python
 
-#Inputs
-pwd = '/labdata/allab/michaelc/David_Dicer_data'
-base = '12aug01q_'
-outfile = 'dicer_upload.txt'
-pixelsize = 2.18e-10	#IN METERS
-tiltangle = 55
-binning = 1
-magnification = 50000
-hightension = 120
-defocus = -1e-06		#IN METERS
-#####################
+#This script will generate a text file containing a list of untilted and tilted micrographs for uploading into Appion. 
+#The output file will have the following columns: 
+
+#/path/to/filename	pixelsize(meters)	binx	biny	nominalscopemag	df	HT	alphatilt
+
+#And the micrographs will be listed in the following order:
+
+#micrograph1_untilted
+#micrograph1_tilted
+#micrograph2_untilted
+#micrograph2_tilted
+#etc.
+
+#################
+#INPUTS ARE HERE#
+#################
+
+#NOTE: Assumes linear ordering of micrographs
+
+pwd = '/labdata/allab/michaelc/David_Dicer_data'	#Full path to micrographs
+base = '12aug01q_'					#Basename of micrographs. Leave blank if no basename.
+outfile = 'dicer_upload.txt'				#Output filename
+pixelsize = 2.18e-10					#Pixel size (IN METERS)	
+tiltangle = 55						#Tilt angle used 
+binning = 1						#Binning of micrographs (1 = no binning)
+magnification = 50000					#Magnification
+hightension = 120					#High tension of microscope (IN KILOVOLTS)
+defocus = -1e-06					#Approx. defocus (IN METERS)	
+tot = 35						#Total number of tilt pairs 
+
+#################
+#Program ########
+#################
 
 o1 = open(outfile,'w')
 
-#filenamepath	pixelsize(meters)	binx	biny	nominalscopemag	df	HT	alphatilt
-
 first=1
-last=35
+last=tot
 
 while first <= last:
 
