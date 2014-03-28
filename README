@@ -1,1 +1,8 @@
 Useful scripts for using/interacting with Appion
+
+============
+
+make_uploader_file.py - create text file containing tilt micrograph pairs for appion
+bbox.csh - box out all .box/.mrc files using batchboxer
+boxem.csh - automatically open EMAN's boxer program for all .mrc files within current working directory  
+convert_dm3_tif.py - convert .dm3 images into .tif images
