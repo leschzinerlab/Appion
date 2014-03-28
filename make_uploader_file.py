@@ -94,7 +94,7 @@ def start(param):
 	
 	tiltedList = glob.glob('%s/*%s.mrc' %(param['path'],param['Text']))
 	
-	for tilt in tiltedList:
+	for tilt in sorted(tiltedList):
 		
 		#Retrieve untilted micrograph pair filename	
 		tiltNoExt = tilt.split('%s'%(param['Text']))
