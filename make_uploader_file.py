@@ -18,7 +18,7 @@ def setupParserOptions():
         parser.add_option("--tilt",dest="tilt",type="int", metavar="INT",
                 help="Tilt angle (+ or -) for tilted particles")
         parser.add_option("--apix",dest="apix",type="float", metavar="FLOAT",
-                help="Pixel size")
+                help="Pixel size (A/pix)")
         parser.add_option("--mag",dest="mag",type="float", metavar="FLOAT",
                 help="Magnification")
 	parser.add_option("--HT",dest="HT",type="int", metavar="INT",
@@ -108,9 +108,9 @@ def start(param):
 				continue
 			untilt = untilt+'t'+tiltNoExt[i]
 			i = i + 1
-		o1.write('%s\t%s\t1\t1\t%s\t%s\t%s\t%s\n' %(untilt+'%s.mrc'%(param['Uext']),str(param['apix']),str(param['mag']),str(param['def'])+'e-06',str(param['HT']),str(0)))
+		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(untilt+'%s.mrc'%(param['Uext']),str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(0)))
 
-		o1.write('%s\t%s\t1\t1\t%s\t%s\t%s\t%s\n' %(tilt,str(param['apix']),str(param['mag']),str(param['def'])+'e-06',str(param['HT']),str(param['tilt'])))
+		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(tilt,str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(param['tilt'])))
 
 
 #==============================
