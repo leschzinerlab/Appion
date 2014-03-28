@@ -1,54 +1,122 @@
 #!/usr/bin/env python
 
-#This script will generate a text file containing a list of untilted and tilted micrographs for uploading into Appion. 
-#NOTE: Assumes linear ordering of micrographs and numbering: basename01_00.mrc, where there are two digits for micrograph number ('01').
+import optparse
+from sys import *
+import os,sys,re
+from optparse import OptionParser
+import glob
+import subprocess
+from os import system
+import linecache
+import time
+#=========================
+def setupParserOptions():
+        parser = optparse.OptionParser()
+        parser.set_usage("%prog -p <path/to/images> --tilt=[tiltangle] --apix=[pixelsize] --mag=[magnification] --HT=[hightension] --def=[defocus] --Uext=[untiltExtension] --Text=[tiltExtension]")
+        parser.add_option("-p",dest="path",type="string",metavar="FILE",
+                help="Absolute path to the folder containing tilt-mates")
+        parser.add_option("--tilt",dest="tilt",type="int", metavar="INT",
+                help="Tilt angle (+ or -) for tilted particles")
+        parser.add_option("--apix",dest="apix",type="float", metavar="FLOAT",
+                help="Pixel size")
+        parser.add_option("--mag",dest="mag",type="float", metavar="FLOAT",
+                help="Magnification")
+	parser.add_option("--HT",dest="HT",type="int", metavar="INT",
+                help="High tension of microscope (keV)")
+	parser.add_option("--def",dest="def",type="float", metavar="FLOAT",
+                help="Defocus (approx.) of images (um)")
+	parser.add_option("--Uext",dest="Uext",type="string", metavar="STRING",
+                help="Untilted micrograph extension (e.g. '00', 'u')")
+	parser.add_option("--Text",dest="Text",type="string", metavar="STRING",
+                help="Tilted micrograph extension (e.g. '01', 't')")
+        parser.add_option("-d", action="store_true",dest="debug",default=False,
+                help="debug")
+        options,args = parser.parse_args()
 
-#The output file will have the following columns: 
+        if len(args) > 1:
+                parser.error("Unknown commandline options: " +str(args))
 
-#/path/to/filename	pixelsize(meters)	binx	biny	nominalscopemag	df	HT	alphatilt
+        if len(sys.argv) < 5:
+                parser.print_help()
+                sys.exit()
+        params={}
+        for i in parser.option_list:
+                if isinstance(i.dest,str):
+                        params[i.dest] = getattr(options,i.dest)
+        return params
+#=============================
+def checkConflicts(params):
+        if not params['path']:
+                print "\nWarning: no path specified\n"
+        elif not os.path.exists(params['path']):
+                print "\nError: path '%s' does not exist\n" % params['path']
+                sys.exit()
+        if not params['tilt']:
+                print "\nWarning: no tilt angle specified\n"
+                sys.exit()
+        if not params['apix']:
+                print "\nWarning: no pixel size specified\n"
+                sys.exit()
+	if not params['mag']:
+                print "\nWarning: no magnification specified\n"
+                sys.exit()
+	if not params['HT']:
+                print "\nWarning: no high tension specified\n"
+                sys.exit()
+	if not params['def']:
+                print "\nWarning: no defocus specified\n"
+                sys.exit()
+	if not params['Text']:
+                print "\nWarning: no tilted micrograph extension specified\n"
+                sys.exit()
+	if not params['Uext']:
+                print "\nWarning: no untilted micrograph extension specified\n"
+                sys.exit()
 
-#And the micrographs will be listed in the following order:
+#==================
+def start(param):
+	
+	o1 = open('RCT_upload.txt','w')	#output file
 
-#micrograph1_untilted
-#micrograph1_tilted
-#micrograph2_untilted
-#micrograph2_tilted
-#etc.
+	first=1
+	#Number of untilted micrographs:
+	numUntilt = len(glob.glob('%s/*%s.mrc' %(param['path'],param['Uext'])))
+	if param['debug'] is True:
+		print 'Number of untilted micrographs = %i' %(numUntilt)
+	#Number of tilted micrographs: 
+	numTilt = len(glob.glob('%s/*%s.mrc' %(param['path'],param['Text'])))
+        if param['debug'] is True:
+                print 'Number of tilted micrographs = %i' %(numTilt)
+	if numTilt != numUntilt: 
+		print 'Warning: Number of untilted and tilted micrographs are unequal. Exiting...'
+		sys.exit()
+	totalMicros = numTilt + numUntilt
+	
+	tiltedList = glob.glob('%s/*%s.mrc' %(param['path'],param['Text']))
+	
+	for tilt in tiltedList:
+		
+		#Retrieve untilted micrograph pair filename	
+		tiltNoExt = tilt.split('%s'%(param['Text']))
+		numPartsTilt = len(tiltNoExt)
+		i = 0
+		untilt = ''
+		while i < numPartsTilt-1:
+			if i == 0:
+				untilt = untilt+tiltNoExt[i]	
+				i = i + 1
+				continue
+			untilt = untilt+'t'+tiltNoExt[i]
+			i = i + 1
+		o1.write('%s\t%s\t1\t1\t%s\t%s\t%s\t%s\n' %(untilt+'%s.mrc'%(param['Uext']),str(param['apix']),str(param['mag']),str(param['def'])+'e-06',str(param['HT']),str(0)))
 
-#################
-#INPUTS ARE HERE#
-#################
-
-pwd = '/labdata/allab/michaelc/5merRCT/gHgLgO'	#Full path to micrographs
-base = ''					#Basename of micrographs. Leave blank if no basename.
-outfile = 'RCT_upload.txt'				#Output filename
-pixelsize = 2.16e-10					#Pixel size (IN METERS)	
-tiltangle = -50						#Tilt angle used 
-binning = 1						#Binning of micrographs (1 = no binning)
-magnification = 50000					#Magnification
-hightension = 120					#High tension of microscope (IN KILOVOLTS)
-defocus = -1e-06					#Approx. defocus (IN METERS)	
-tot = 30						#Total number of tilt pairs 
-untilt_extension = '_00'				#Indicator in filename specifying if micrograph was tilted
-tilt_extension = '_50'					#Indicator in filename specifying if micrograph was tilted
-
-#################
-#Program ########
-#################
-
-o1 = open(outfile,'w')
-
-first=1
-last=tot
+		o1.write('%s\t%s\t1\t1\t%s\t%s\t%s\t%s\n' %(tilt,str(param['apix']),str(param['mag']),str(param['def'])+'e-06',str(param['HT']),str(param['tilt'])))
 
 
-while first <= last:
+#==============================
+if __name__ == "__main__":
 
-	tilt ='%s/%s%02d%s.mrc' %(pwd,base,first,tilt_extension)
-	untilt = '%s/%s%02d%s.mrc' %(pwd,base,first,untilt_extension)
-
-	o1.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' %(untilt,str(pixelsize),str(binning),str(binning),str(magnification),str(defocus),str(hightension),str(0)))
-
-	o1.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' %(tilt,str(pixelsize),str(binning),str(binning),str(magnification),str(defocus),str(hightension),str(tiltangle)))	
-	first = first + 1
+        params=setupParserOptions()
+        checkConflicts(params)
+        start(params)
 
