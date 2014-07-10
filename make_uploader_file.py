@@ -29,7 +29,9 @@ def setupParserOptions():
                 help="Untilted micrograph extension (e.g. '00', 'u')")
 	parser.add_option("--Text",dest="Text",type="string", metavar="STRING",
                 help="Tilted micrograph extension (e.g. '01', 't')")
-        parser.add_option("-d", action="store_true",dest="debug",default=False,
+        parser.add_option("--leginon",action="store_true",dest="leginon",default=False,
+		help="Flag if tilt mates came from leginon")
+	parser.add_option("-d", action="store_true",dest="debug",default=False,
                 help="debug")
         options,args = parser.parse_args()
 
@@ -88,16 +90,33 @@ def start(param):
         if param['debug'] is True:
                 print 'Number of tilted micrographs = %i' %(numTilt)
 	if numTilt != numUntilt: 
-		print 'Warning: Number of untilted and tilted micrographs are unequal. Exiting...'
-		sys.exit()
+		print 'Warning: Number of untilted and tilted micrographs are unequal. Check output file to confirm they are correctly matched!'
 	totalMicros = numTilt + numUntilt
 	
 	tiltedList = glob.glob('%s/*%s.mrc' %(param['path'],param['Text']))
 	
 	for tilt in sorted(tiltedList):
-		
+
+		tiltOrig = tilt
+	
+		if params['leginon'] is True:
+                        #parse this type of filename: 14jul09b_00009hl_00_00008en_00.mrc 
+                        tiltsplit=tilt.split('hl')
+                        if params['debug'] is True:
+                                print tiltsplit
+                        
+			untiltMiddleChange = '_'+param['Uext'][-2:]+'_'+tiltsplit[1][4:]
+	
+                        tilt=tiltsplit[0]+'hl'+untiltMiddleChange
+
+			if params['debug'] is True:
+				print tilt
+
 		#Retrieve untilted micrograph pair filename	
-		tiltNoExt = tilt.split('%s'%(param['Text']))
+		tiltNoExt = tilt.split('%s'%(param['Text']+'.'))
+		if params['debug'] is True:
+			print tiltNoExt
+		
 		numPartsTilt = len(tiltNoExt)
 		i = 0
 		untilt = ''
@@ -106,11 +125,21 @@ def start(param):
 				untilt = untilt+tiltNoExt[i]	
 				i = i + 1
 				continue
-			untilt = untilt+'t'+tiltNoExt[i]
+			untilt = untilt+tiltNoExt[i]
+			if params['debug'] is True:
+				print untilt
 			i = i + 1
+	
+		#Check that tilt mates exist
+		if os.path.exists('%s' %(untilt+'%s.mrc'%(param['Uext']))) is False:
+			if params['debug'] is True:
+				print '%s' %(untilt+'%s.mrc'%(param['Uext']))
+			print 'No tilt mate for %s' %(tilt)
+			continue		
+
 		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(untilt+'%s.mrc'%(param['Uext']),str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(0)))
 
-		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(tilt,str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(param['tilt'])))
+		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(tiltOrig,str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(param['tilt'])))
 
 
 #==============================
