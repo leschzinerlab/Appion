@@ -15,8 +15,10 @@ def setupParserOptions():
         parser.set_usage("%prog -p <path/to/images> --tilt=[tiltangle] --apix=[pixelsize] --mag=[magnification] --HT=[hightension] --def=[defocus] --Uext=[untiltExtension] --Text=[tiltExtension]")
         parser.add_option("-p",dest="path",type="string",metavar="FILE",
                 help="Absolute path to the folder containing tilt-mates")
-        parser.add_option("--tilt",dest="tilt",type="int", metavar="INT",
-                help="Tilt angle (+ or -) for tilted particles")
+        parser.add_option("--untilt",dest="untilt",type="int", metavar="INT",default=0,
+                help="Tilt angle for untilted particles")
+	parser.add_option("--tilt",dest="tilt",type="int", metavar="INT",
+                help="Tilt angle for tilted particles")
         parser.add_option("--apix",dest="apix",type="float", metavar="FLOAT",
                 help="Pixel size (A/pix)")
         parser.add_option("--mag",dest="mag",type="float", metavar="FLOAT",
@@ -54,7 +56,7 @@ def checkConflicts(params):
                 print "\nError: path '%s' does not exist\n" % params['path']
                 sys.exit()
         if not params['tilt']:
-                print "\nWarning: no tilt angle specified\n"
+                print "\nWarning: no tilt angle specified for tilted particles\n"
                 sys.exit()
         if not params['apix']:
                 print "\nWarning: no pixel size specified\n"
@@ -137,7 +139,7 @@ def start(param):
 			print 'No tilt mate for %s' %(tilt)
 			continue		
 
-		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(untilt+'%s.mrc'%(param['Uext']),str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(0)))
+		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(untilt+'%s.mrc'%(param['Uext']),str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),param['untilt']))
 
 		o1.write('%s\t%s\t1\t1\t%i\t%s\t%s\t%s\n' %(tiltOrig,str(param['apix'])+'e-10',param['mag'],str(param['def'])+'e-06',str(param['HT']*1000),str(param['tilt'])))
 
