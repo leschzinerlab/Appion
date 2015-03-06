@@ -65,6 +65,8 @@ def convertAppionToRelionCTF(params):
 			continue
 		
 		#Prepare micrograph name
+		if params['debug'] is True:
+			print line
 		micro = re.sub('%s' %(params['appion']),'',l[11])
 		microname = '%s/' %(params['folder'])+micro+'.mrc'
 		if params['debug'] is True:
